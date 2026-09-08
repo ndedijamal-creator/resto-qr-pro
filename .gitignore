@@ -1,0 +1,16 @@
+# Dépendances (réinstallées automatiquement par npm install)
+node_modules/
+
+# Fichiers d'environnement contenant des secrets — ne JAMAIS les publier sur GitHub
+.env
+.env.local
+.env.production
+
+# Fichiers de build
+dist/
+build/
+
+# Logs et fichiers système
+*.log
+.DS_Store
+Thumbs.db
