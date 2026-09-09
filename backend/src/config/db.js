@@ -6,6 +6,8 @@ require('dotenv').config();
 
 // Le pool gère automatiquement plusieurs connexions simultanées,
 // ce qui est indispensable pour une application en production.
+// DB_SSL=true active une connexion chiffrée, nécessaire pour la plupart
+// des hébergeurs MySQL gérés (Aiven, PlanetScale, etc.) mais pas pour WAMP en local.
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT || 3306,
@@ -16,6 +18,7 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   dateStrings: true,
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
 });
 
 // Vérifie la connexion au démarrage du serveur
