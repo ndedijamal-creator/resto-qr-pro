@@ -21,16 +21,15 @@ const pool = mysql.createPool({
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
 });
 
-// Vérifie la connexion au démarrage du serveur
+// Vérifie la connexion au démarrage du serveur. Ne fait volontairement PAS
+// planter le processus en cas d'échec : le serveur HTTP doit rester debout
+// (pour répondre aux vérifications de santé de l'hébergeur) même si la base
+// de données est temporairement injoignable ; l'erreur est simplement relayée
+// à l'appelant pour être journalisée.
 async function testConnection() {
-  try {
-    const connection = await pool.getConnection();
-    console.log('✅ Connexion MySQL établie avec succès.');
-    connection.release();
-  } catch (error) {
-    console.error('❌ Impossible de se connecter à MySQL :', error.message);
-    process.exit(1);
-  }
+  const connection = await pool.getConnection();
+  console.log('✅ Connexion MySQL établie avec succès.');
+  connection.release();
 }
 
 module.exports = { pool, testConnection };

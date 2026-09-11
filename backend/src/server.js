@@ -68,11 +68,30 @@ app.use((err, req, res, next) => {
 
 // ---------------------------------------------------------------------
 // Démarrage du serveur (HTTP + Socket.IO)
+//
+// Important : le serveur commence à écouter IMMÉDIATEMENT, sans attendre
+// la connexion à la base de données. Certains hébergeurs (Back4app, Render...)
+// vérifient que le port répond en 1 seconde à peine — si on attendait la
+// base de données avant d'ouvrir le port, le moindre aléa réseau ferait
+// échouer le déploiement, même si tout finit par fonctionner normalement.
+// La connexion à MySQL et la génération des QR Codes manquants se font
+// donc en tâche de fond, une fois le serveur déjà démarré.
 // ---------------------------------------------------------------------
 const PORT = process.env.PORT || 5000;
 
-async function demarrer() {
-  await testConnection();
+initSocket(server);
+
+server.listen(PORT, () => {
+  console.log(`🚀 RESTO QR PRO backend démarré sur le port ${PORT}`);
+});
+
+async function initialiserApresDemarrage() {
+  try {
+    await testConnection();
+  } catch (error) {
+    console.error('⚠️  Connexion MySQL indisponible pour le moment :', error.message);
+    return; // Pas la peine de tenter la génération des QR Codes sans base de données
+  }
 
   // Auto-répare les tables qui n'ont pas encore de QR Code (ex : données
   // de démonstration insérées directement en SQL) — plus besoin de script manuel.
@@ -81,14 +100,8 @@ async function demarrer() {
   } catch (error) {
     console.error('⚠️  Impossible de vérifier/générer les QR Codes manquants :', error.message);
   }
-
-  initSocket(server);
-
-  server.listen(PORT, () => {
-    console.log(`🚀 RESTO QR PRO backend démarré sur le port ${PORT}`);
-  });
 }
 
-demarrer();
+initialiserApresDemarrage();
 
 module.exports = { app, server };
